@@ -1,0 +1,2311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CULT OF SYMMETRICS // MIRROR COPY TERMINAL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=JetBrains+Mono:wght@300;400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #000000;
+  --bg2:     #080808;
+  --bg3:     #0d0d0d;
+  --bg4:     #111111;
+  --grid:    #0f0f0f;
+  --border:  #1a1a1a;
+  --border2: #222222;
+  --white:   #ffffff;
+  --dim:     #444444;
+  --mid:     #888888;
+  --cyan:    #00e5ff;
+  --cyan2:   #00b8cc;
+  --green:   #00ff88;
+  --green2:  #00cc6a;
+  --red:     #ff2244;
+  --red2:    #cc1133;
+  --purple:  #aa44ff;
+  --purple2: #7700cc;
+  --yellow:  #ffcc00;
+  --orange:  #ff6600;
+  --font:    'JetBrains Mono', 'Share Tech Mono', monospace;
+  --font-display: 'Orbitron', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font);
+  height: 100vh;
+  overflow: hidden;
+  cursor: crosshair;
+  user-select: none;
+}
+
+/* CRT SCANLINES */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* NOISE OVERLAY */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.3;
+}
+
+/* GRID CANVAS BACKGROUND */
+#grid-canvas {
+  position: fixed; inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════ */
+#app {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 48px 1fr 200px;
+  grid-template-columns: 1fr;
+}
+
+/* HEADER */
+#header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border2);
+  background: rgba(0,0,0,0.95);
+  backdrop-filter: blur(20px);
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+#header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: 0.4;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-ascii {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.4em;
+  color: var(--white);
+  text-shadow: 0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(0,229,255,0.2);
+  animation: logoFlicker 8s ease-in-out infinite;
+}
+
+@keyframes logoFlicker {
+  0%,96%,100% { opacity: 1; }
+  97% { opacity: 0.3; }
+  98% { opacity: 1; }
+  99% { opacity: 0.5; }
+}
+
+.logo-tag {
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: var(--cyan);
+  opacity: 0.7;
+  border-left: 1px solid var(--border2);
+  padding-left: 12px;
+}
+
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: center;
+}
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: var(--mid);
+  padding: 4px 10px;
+  border: 1px solid var(--border2);
+  background: rgba(0,229,255,0.02);
+}
+
+.status-dot-hd {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+.status-dot-hd.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.status-dot-hd.cyan  { background: var(--cyan);  box-shadow: 0 0 6px var(--cyan);  }
+.status-dot-hd.red   { background: var(--red);   box-shadow: 0 0 6px var(--red);   }
+.status-dot-hd.orange { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+
+@keyframes dotPulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.meta-item {
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  color: var(--dim);
+}
+
+.meta-item span {
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+/* ── MAIN PANELS ── */
+#main {
+  display: grid;
+  grid-template-columns: 260px 1fr 260px;
+  border-bottom: 1px solid var(--border2);
+  overflow: hidden;
+}
+
+/* PANEL BASE */
+.panel {
+  border-right: 1px solid var(--border2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.panel:last-child { border-right: none; }
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-size: 8px;
+  letter-spacing: 0.3em;
+  color: var(--mid);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-title::before {
+  content: '//';
+  color: var(--border2);
+}
+
+.panel-badge {
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border: 1px solid;
+}
+
+.panel-badge.cyan  { color: var(--cyan);  border-color: var(--cyan2);  background: rgba(0,229,255,0.05); }
+.panel-badge.green { color: var(--green); border-color: var(--green2); background: rgba(0,255,136,0.05); }
+.panel-badge.red   { color: var(--red);   border-color: var(--red2);   background: rgba(255,34,68,0.05);  }
+.panel-badge.purple { color: var(--purple); border-color: var(--purple2); background: rgba(170,68,255,0.05); }
+
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0;
+}
+
+.panel-body::-webkit-scrollbar { width: 2px; }
+.panel-body::-webkit-scrollbar-track { background: var(--bg); }
+.panel-body::-webkit-scrollbar-thumb { background: var(--border2); }
+
+/* ═══════════════════════════════════════
+   WALLET POOL PANEL (LEFT)
+═══════════════════════════════════════ */
+.wallet-input-row {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.wallet-input-row input {
+  flex: 1;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  color: var(--cyan);
+  font-family: var(--font);
+  font-size: 8px;
+  padding: 4px 8px;
+  letter-spacing: 0.05em;
+  outline: none;
+  caret-color: var(--cyan);
+}
+
+.wallet-input-row input::placeholder { color: var(--dim); }
+.wallet-input-row input:focus { border-color: var(--cyan2); }
+
+.wallet-input-row button {
+  background: rgba(0,229,255,0.08);
+  border: 1px solid var(--cyan2);
+  color: var(--cyan);
+  font-family: var(--font);
+  font-size: 7px;
+  letter-spacing: 0.15em;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.wallet-input-row button:hover {
+  background: rgba(0,229,255,0.15);
+}
+
+.wallet-item {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+
+.wallet-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+}
+
+.wallet-item.mirroring::before { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+.wallet-item.available::before { background: var(--dim); }
+.wallet-item:hover { background: var(--bg3); }
+
+.wallet-row1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+}
+
+.wallet-addr {
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+.wallet-winrate {
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+}
+
+.wallet-row2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.wallet-meta-sm {
+  font-size: 7px;
+  color: var(--dim);
+  letter-spacing: 0.05em;
+}
+
+.wallet-meta-sm .hl { color: var(--green); }
+
+.add-mirror-btn {
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  padding: 2px 6px;
+  border: 1px solid var(--cyan2);
+  background: rgba(0,229,255,0.05);
+  color: var(--cyan);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.add-mirror-btn:hover { background: rgba(0,229,255,0.15); }
+.add-mirror-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.add-mirror-btn.active {
+  border-color: var(--green2);
+  color: var(--green);
+  background: rgba(0,255,136,0.05);
+}
+
+/* ═══════════════════════════════════════
+   CORE ENGINE — MIRROR GRID (CENTER)
+═══════════════════════════════════════ */
+#panel-core {
+  border-left: 1px solid var(--border2);
+  border-right: 1px solid var(--border2);
+}
+
+/* MASTER WALLET STATS */
+.master-stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.master-stat {
+  padding: 8px 12px;
+  border-right: 1px solid var(--border);
+  cursor: default;
+  transition: background 0.2s;
+}
+
+.master-stat:last-child { border-right: none; }
+.master-stat:hover { background: var(--bg3); }
+
+.master-stat-label {
+  font-size: 7px;
+  letter-spacing: 0.25em;
+  color: var(--dim);
+  margin-bottom: 2px;
+}
+
+.master-stat-value {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.master-stat-value.cyan   { color: var(--cyan);   text-shadow: 0 0 20px rgba(0,229,255,0.4); }
+.master-stat-value.green  { color: var(--green);  text-shadow: 0 0 20px rgba(0,255,136,0.4); }
+.master-stat-value.red    { color: var(--red);    text-shadow: 0 0 20px rgba(255,34,68,0.4);  }
+.master-stat-value.white  { color: var(--white);  text-shadow: 0 0 20px rgba(255,255,255,0.3); }
+
+.master-stat-sub {
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+}
+
+.master-stat-sub.up   { color: var(--green); }
+.master-stat-sub.down { color: var(--red);   }
+
+/* CONTROL BAR */
+.control-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+
+.ctrl-btn {
+  font-family: var(--font);
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  padding: 4px 12px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: none;
+}
+
+.ctrl-btn.start {
+  color: var(--green);
+  border-color: var(--green2);
+  background: rgba(0,255,136,0.05);
+}
+
+.ctrl-btn.start:hover { background: rgba(0,255,136,0.15); }
+
+.ctrl-btn.stop {
+  color: var(--red);
+  border-color: var(--red2);
+  background: rgba(255,34,68,0.05);
+}
+
+.ctrl-btn.stop:hover { background: rgba(255,34,68,0.15); }
+
+.ctrl-btn.reset {
+  color: var(--yellow);
+  border-color: #664400;
+  background: rgba(255,204,0,0.03);
+}
+
+.ctrl-btn.reset:hover { background: rgba(255,204,0,0.1); }
+
+.ctrl-label {
+  font-size: 7px;
+  letter-spacing: 0.15em;
+  color: var(--dim);
+}
+
+.ctrl-input {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  color: var(--white);
+  font-family: var(--font);
+  font-size: 9px;
+  padding: 3px 8px;
+  width: 80px;
+  outline: none;
+  caret-color: var(--cyan);
+}
+
+.ctrl-input:focus { border-color: var(--cyan2); }
+
+/* MIRROR SLOTS GRID */
+.mirror-grid-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px;
+  align-content: start;
+}
+
+.mirror-grid-container::-webkit-scrollbar { width: 2px; }
+.mirror-grid-container::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.mirror-slot {
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.mirror-slot.running { border-color: rgba(0,229,255,0.3); }
+
+.mirror-slot-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+
+.mirror-status-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--dim);
+  flex-shrink: 0;
+}
+
+.mirror-status-dot.running {
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+.mirror-slot-addr {
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  color: var(--cyan);
+  font-weight: 700;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mirror-remove-btn {
+  font-size: 7px;
+  padding: 1px 4px;
+  border: 1px solid var(--red2);
+  background: none;
+  color: var(--red);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.1em;
+}
+
+.mirror-remove-btn:hover { background: rgba(255,34,68,0.1); }
+
+.mirror-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.mirror-tab {
+  flex: 1;
+  text-align: center;
+  padding: 3px 0;
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  transition: all 0.15s;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.mirror-tab.on {
+  color: var(--cyan);
+  border-bottom-color: var(--cyan);
+}
+
+.mirror-tab:hover { color: var(--mid); }
+
+.mirror-body {
+  padding: 6px 8px;
+  font-size: 8px;
+  overflow-y: auto;
+  max-height: 200px;
+}
+
+.mirror-body::-webkit-scrollbar { width: 2px; }
+.mirror-body::-webkit-scrollbar-thumb { background: var(--border2); }
+
+/* CONFIG FIELDS */
+.cfg-section-title {
+  font-size: 7px;
+  letter-spacing: 0.25em;
+  color: var(--purple);
+  margin: 6px 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cfg-section-title::before { content: '◈'; }
+
+.cfg-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+  font-size: 7px;
+  letter-spacing: 0.05em;
+}
+
+.cfg-row .key { color: var(--dim); }
+.cfg-row .val { color: var(--white); }
+
+.cfg-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--white);
+  font-family: var(--font);
+  font-size: 8px;
+  padding: 2px 5px;
+  width: 55px;
+  outline: none;
+  text-align: right;
+}
+
+.cfg-input:focus { border-color: var(--cyan2); }
+
+.cfg-toggle {
+  width: 24px; height: 12px;
+  border-radius: 6px;
+  background: var(--border2);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cfg-toggle.on { background: var(--green2); }
+.cfg-toggle::after {
+  content: '';
+  position: absolute;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  top: 2px; left: 2px;
+  transition: left 0.2s;
+}
+
+.cfg-toggle.on::after { left: 14px; }
+
+.mirror-start-btn {
+  width: 100%;
+  padding: 4px;
+  margin-top: 6px;
+  font-family: var(--font);
+  font-size: 7px;
+  letter-spacing: 0.15em;
+  border: 1px solid var(--green2);
+  background: rgba(0,255,136,0.05);
+  color: var(--green);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mirror-start-btn:hover { background: rgba(0,255,136,0.15); }
+.mirror-start-btn.stop-btn {
+  border-color: var(--red2);
+  color: var(--red);
+  background: rgba(255,34,68,0.05);
+}
+
+.mirror-start-btn.stop-btn:hover { background: rgba(255,34,68,0.15); }
+
+/* FEED TX CARD */
+.tx-card {
+  border: 1px solid var(--border);
+  padding: 5px 7px;
+  margin-bottom: 4px;
+  font-size: 7px;
+  background: var(--bg);
+}
+
+.tx-card-top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 3px;
+}
+
+.tx-badge {
+  font-size: 6px;
+  letter-spacing: 0.15em;
+  padding: 1px 4px;
+  border: 1px solid;
+}
+
+.tx-badge.buy { color: var(--green); border-color: var(--green2); }
+.tx-badge.sell { color: var(--red); border-color: var(--red2); }
+.tx-badge.warn { color: var(--yellow); border-color: #664400; }
+
+.tx-token { color: var(--white); font-weight: 700; font-size: 8px; }
+.tx-time { color: var(--dim); font-size: 6px; margin-left: auto; }
+
+.tx-detail {
+  display: flex;
+  justify-content: space-between;
+  font-size: 7px;
+  padding: 1px 0;
+}
+
+.tx-detail .k { color: var(--dim); }
+.tx-detail .v { color: var(--mid); }
+.tx-detail .v.pos { color: var(--green); }
+.tx-detail .v.neg { color: var(--red); }
+
+/* STATS */
+.stat-block {
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  background: var(--bg);
+}
+
+.stat-block .stat-title {
+  font-size: 7px;
+  letter-spacing: 0.15em;
+  color: var(--dim);
+  margin-bottom: 2px;
+}
+
+.stat-block .stat-val {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+/* PLACEHOLDER */
+.mirror-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--dim);
+  font-size: 8px;
+  text-align: center;
+  padding: 30px;
+  letter-spacing: 0.1em;
+  line-height: 2;
+}
+
+/* ═══════════════════════════════════════
+   TRADE INTEL PANEL (RIGHT)
+═══════════════════════════════════════ */
+.pnl-item {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pnl-row1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+}
+
+.pnl-addr {
+  font-size: 8px;
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+.pnl-val {
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.pnl-val.pos { color: var(--green); }
+.pnl-val.neg { color: var(--red); }
+
+.pnl-row2 {
+  display: flex;
+  gap: 10px;
+  font-size: 7px;
+  color: var(--dim);
+  letter-spacing: 0.05em;
+}
+
+.pnl-row2 .hl { color: var(--green); }
+.pnl-row2 .hl-r { color: var(--red); }
+
+/* MASTER PNL BLOCK */
+.master-pnl-block {
+  margin: 8px;
+  padding: 10px;
+  border: 1px solid var(--border2);
+  background: var(--bg2);
+}
+
+.master-pnl-title {
+  font-size: 7px;
+  letter-spacing: 0.25em;
+  color: var(--purple);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.master-pnl-title::before { content: '⬡'; }
+
+/* PRICE GRAPH */
+.price-graph-section {
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.graph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.graph-title {
+  font-size: 7px;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+}
+
+#price-canvas {
+  width: 100%;
+  display: block;
+}
+
+/* ═══════════════════════════════════════
+   EVENT LOG (BOTTOM)
+═══════════════════════════════════════ */
+#bottom {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  background: var(--bg);
+}
+
+#panel-log {
+  border-right: 1px solid var(--border2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+
+.log-title {
+  font-size: 8px;
+  letter-spacing: 0.25em;
+  color: var(--mid);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.log-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.log-pause-btn {
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  background: none;
+  border: 1px solid var(--border2);
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font);
+}
+
+.log-pause-btn:hover, .log-pause-btn.paused {
+  color: var(--yellow);
+  border-color: #664400;
+}
+
+.log-filter {
+  display: flex;
+  gap: 4px;
+}
+
+.log-filter-btn {
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  background: none;
+  border: 1px solid var(--border);
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font);
+}
+
+.log-filter-btn.active {
+  color: var(--white);
+  border-color: var(--border2);
+  background: rgba(255,255,255,0.04);
+}
+
+#log-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 0;
+}
+
+#log-body::-webkit-scrollbar { width: 2px; }
+#log-body::-webkit-scrollbar-track { background: var(--bg); }
+#log-body::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.log-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 12px;
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  line-height: 1.6;
+  animation: logEntry 0.2s ease forwards;
+}
+
+@keyframes logEntry {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.log-time {
+  color: var(--dim);
+  flex-shrink: 0;
+  font-size: 7px;
+}
+
+.log-tag {
+  flex-shrink: 0;
+  font-size: 7px;
+  padding: 0px 4px;
+  border: 1px solid;
+  letter-spacing: 0.15em;
+}
+
+.log-tag.TRADE { color: var(--green);  border-color: var(--green2);  }
+.log-tag.WARN  { color: var(--yellow); border-color: #664400;        }
+.log-tag.SELL  { color: var(--red);    border-color: var(--red2);    }
+.log-tag.COPY  { color: var(--cyan);   border-color: var(--cyan2);   }
+.log-tag.INFO  { color: var(--mid);    border-color: var(--border2); }
+.log-tag.ALERT { color: var(--purple); border-color: var(--purple2); animation: anomalyPulse 2s ease-in-out infinite; }
+.log-tag.SYS   { color: var(--mid);    border-color: var(--border2); }
+
+@keyframes anomalyPulse {
+  0%,100% { box-shadow: none; }
+  50% { box-shadow: 0 0 8px rgba(170,68,255,0.3); }
+}
+
+.log-msg {
+  color: var(--mid);
+  flex: 1;
+}
+
+.log-msg .hl-addr   { color: var(--cyan);   }
+.log-msg .hl-green  { color: var(--green);  }
+.log-msg .hl-red    { color: var(--red);    }
+.log-msg .hl-purple { color: var(--purple); }
+.log-msg .hl-yellow { color: var(--yellow); }
+
+/* ═══════════════════════════════════════
+   COMMAND TERMINAL (BOTTOM RIGHT)
+═══════════════════════════════════════ */
+#panel-terminal {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+
+.terminal-title {
+  font-size: 8px;
+  letter-spacing: 0.25em;
+  color: var(--mid);
+}
+
+.terminal-indicator {
+  font-size: 7px;
+  letter-spacing: 0.15em;
+  color: var(--green);
+  animation: terminalBlink 1s step-end infinite;
+}
+
+@keyframes terminalBlink {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+#terminal-output {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 10px;
+  font-size: 8px;
+  line-height: 1.8;
+  letter-spacing: 0.05em;
+}
+
+#terminal-output::-webkit-scrollbar { width: 2px; }
+#terminal-output::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.term-line {
+  color: var(--dim);
+  animation: logEntry 0.15s ease forwards;
+}
+
+.term-line.cmd { color: var(--cyan); }
+.term-line.out { color: var(--mid); }
+.term-line.ok  { color: var(--green); }
+.term-line.err { color: var(--red); }
+.term-line.warn{ color: var(--yellow); }
+.term-line.sys { color: var(--purple); }
+
+.terminal-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-top: 1px solid var(--border2);
+  padding: 6px 10px;
+  background: var(--bg2);
+  flex-shrink: 0;
+}
+
+.terminal-prompt {
+  font-size: 9px;
+  color: var(--cyan);
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+#terminal-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--white);
+  font-family: var(--font);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  caret-color: var(--cyan);
+  cursor: text;
+  user-select: text;
+}
+
+/* GLITCH EFFECT */
+.glitch { position: relative; }
+.glitch::before, .glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+.glitch::before {
+  color: var(--cyan);
+  animation: glitch1 4s ease-in-out infinite;
+  clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%);
+}
+
+.glitch::after {
+  color: var(--red);
+  animation: glitch2 4s ease-in-out infinite;
+  clip-path: polygon(0 60%, 100% 60%, 100% 70%, 0 70%);
+}
+
+@keyframes glitch1 {
+  0%,94%,100% { transform: translateX(0); opacity: 0; }
+  95% { transform: translateX(-2px); opacity: 0.8; }
+  97% { transform: translateX(2px); opacity: 0.8; }
+}
+
+@keyframes glitch2 {
+  0%,94%,100% { transform: translateX(0); opacity: 0; }
+  96% { transform: translateX(2px); opacity: 0.7; }
+  98% { transform: translateX(-2px); opacity: 0.7; }
+}
+
+/* SCANNING LINE */
+.scan-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: 0;
+  pointer-events: none;
+  animation: scanLineAnim 6s linear infinite;
+}
+
+@keyframes scanLineAnim {
+  0%   { top: 0%;   opacity: 0; }
+  5%   { opacity: 0.4; }
+  95%  { opacity: 0.4; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* BOOT SEQUENCE OVERLAY */
+#boot-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  transition: opacity 0.5s ease;
+}
+
+.boot-logo {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.6em;
+  color: var(--cyan);
+  text-shadow: 0 0 30px rgba(0,229,255,0.5);
+}
+
+.boot-lines {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  line-height: 2;
+  text-align: left;
+  width: 360px;
+}
+
+.boot-line { opacity: 0; animation: bootLine 0.2s forwards; }
+.boot-bar-wrap {
+  width: 360px;
+  height: 2px;
+  background: var(--border2);
+  position: relative;
+  overflow: hidden;
+}
+.boot-bar-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+  width: 0%;
+  transition: width 2s ease;
+}
+
+@keyframes bootLine { from{opacity:0;} to{opacity:1;} }
+
+/* FEE PRESETS */
+.fee-preset-row {
+  display: flex;
+  gap: 3px;
+  margin: 3px 0;
+}
+
+.fee-preset-btn {
+  font-size: 6px;
+  letter-spacing: 0.1em;
+  padding: 2px 5px;
+  border: 1px solid var(--border2);
+  background: none;
+  color: var(--dim);
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.15s;
+}
+
+.fee-preset-btn.on {
+  border-color: var(--cyan2);
+  color: var(--cyan);
+  background: rgba(0,229,255,0.05);
+}
+
+.fee-preset-btn:hover { border-color: var(--cyan2); color: var(--cyan); }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 1200px) {
+  #main { grid-template-columns: 220px 1fr 220px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="grid-canvas"></canvas>
+
+<!-- BOOT OVERLAY -->
+<div id="boot-overlay">
+  <div class="boot-logo glitch" data-text="CULT OF SYMMETRICS">CULT OF SYMMETRICS</div>
+  <div class="boot-lines" id="boot-lines"></div>
+  <div class="boot-bar-wrap">
+    <div class="boot-bar-fill" id="boot-bar"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none;">
+
+  <!-- ══ HEADER ══ -->
+  <div id="header">
+    <div class="header-logo">
+      <div class="logo-ascii glitch" data-text="⬡ COS // MIRROR">⬡ COS // MIRROR</div>
+      <div class="logo-tag">MULTI-WALLET COPY TERMINAL v2.1.0</div>
+    </div>
+
+    <div class="header-status">
+      <div class="status-pill">
+        <div class="status-dot-hd green" id="systemDot"></div>
+        <span>SYSTEM ONLINE</span>
+      </div>
+      <div class="status-pill">
+        <div class="status-dot-hd cyan"></div>
+        <span>SOL: <span id="sol-price-hd">$—</span></span>
+      </div>
+      <div class="status-pill">
+        <div class="status-dot-hd" id="price-change-dot"></div>
+        <span id="sol-change-hd">—</span>
+      </div>
+      <div class="status-pill">
+        <div class="status-dot-hd cyan"></div>
+        <span>MIRRORS: <span id="mirror-count-hd">0</span></span>
+      </div>
+    </div>
+
+    <div class="header-meta">
+      <div class="meta-item">BLOCK: <span id="block-num">285,441,023</span></div>
+      <div class="meta-item">LATENCY: <span id="latency-val">12ms</span></div>
+    </div>
+  </div>
+
+  <!-- ══ MAIN PANELS ══ -->
+  <div id="main">
+
+    <!-- LEFT: WALLET POOL -->
+    <div class="panel" id="panel-wallets">
+      <div class="panel-header">
+        <div class="panel-title">TARGET WALLETS</div>
+        <div class="panel-badge cyan" id="wallet-pool-badge">12 INDEXED</div>
+      </div>
+      <div class="wallet-input-row">
+        <input type="text" id="pasteAddr" placeholder="Paste wallet address...">
+        <button onclick="addCustomWallet()">+ ADD</button>
+      </div>
+      <div class="panel-body" id="wallet-pool"></div>
+    </div>
+
+    <!-- CENTER: CORE / MIRROR GRID -->
+    <div class="panel" id="panel-core" style="border-left:1px solid var(--border2);border-right:1px solid var(--border2);">
+      <div class="panel-header">
+        <div class="panel-title">CORE ENGINE // MIRROR GRID</div>
+        <div class="panel-badge green" id="mirror-status-badge">STANDBY</div>
+      </div>
+      <div class="panel-body" style="display:flex;flex-direction:column;overflow:hidden;">
+
+        <!-- MASTER STATS -->
+        <div class="master-stats-row">
+          <div class="master-stat">
+            <div class="master-stat-label">MASTER BALANCE</div>
+            <div class="master-stat-value cyan" id="ms-bal">1,000.00</div>
+            <div class="master-stat-sub" id="ms-bal-usd">$—</div>
+          </div>
+          <div class="master-stat">
+            <div class="master-stat-label">NET PNL</div>
+            <div class="master-stat-value green" id="ms-pnl">+0.0000</div>
+            <div class="master-stat-sub up" id="ms-pnl-pct">0.00%</div>
+          </div>
+          <div class="master-stat">
+            <div class="master-stat-label">TOTAL TRADES</div>
+            <div class="master-stat-value white" id="ms-trades">0</div>
+            <div class="master-stat-sub" id="ms-fees">FEES: 0.00000</div>
+          </div>
+          <div class="master-stat">
+            <div class="master-stat-label">ACTIVE MIRRORS</div>
+            <div class="master-stat-value green" id="ms-active">0</div>
+            <div class="master-stat-sub" id="ms-running-label">STANDBY</div>
+          </div>
+        </div>
+
+        <!-- CONTROL BAR -->
+        <div class="control-bar">
+          <span class="ctrl-label">MASTER BAL:</span>
+          <input type="number" class="ctrl-input" id="masterBalInput" value="1000" min="0.01" step="1">
+          <button class="ctrl-btn start" id="btnSetBal" onclick="applyMasterBal()">SET</button>
+          <button class="ctrl-btn start" id="btnMirrorAll" onclick="toggleMirrorAll()">▶ MIRROR ALL</button>
+          <button class="ctrl-btn reset" onclick="resetMaster()">↻ RESET</button>
+          <span style="flex:1"></span>
+          <span class="ctrl-label" id="mirror-count-ctrl">0 / 15 SLOTS</span>
+        </div>
+
+        <!-- MIRROR GRID -->
+        <div class="mirror-grid-container" id="mirrorsGrid">
+          <div class="mirror-placeholder">
+            ADD TARGET WALLETS FROM THE LEFT PANEL<br>
+            CLICK [+MIRROR] TO CREATE A COPY SLOT<br>
+            UP TO 15 MIRRORS SHARE ONE MASTER WALLET
+          </div>
+        </div>
+
+        <!-- PRICE GRAPH -->
+        <div class="price-graph-section">
+          <div class="graph-header">
+            <div class="graph-title">SOL/USD // LIVE FEED</div>
+          </div>
+          <canvas id="price-canvas"></canvas>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: PNL / TRADE INTEL -->
+    <div class="panel" id="panel-pnl">
+      <div class="panel-header">
+        <div class="panel-title">TRADE INTEL</div>
+        <div class="panel-badge green" id="pnl-badge">PNL TRACKER</div>
+      </div>
+      <div class="panel-body" id="pnl-list">
+        <!-- Master PNL block + per-mirror PNL items -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ BOTTOM ══ -->
+  <div id="bottom">
+
+    <!-- EVENT LOG -->
+    <div id="panel-log">
+      <div class="log-header">
+        <div class="log-title">
+          ⬡ TRADE STREAM // LIVE
+        </div>
+        <div class="log-controls">
+          <div class="log-filter">
+            <button class="log-filter-btn active" onclick="setLogFilter('ALL')">ALL</button>
+            <button class="log-filter-btn" onclick="setLogFilter('COPY')">COPY</button>
+            <button class="log-filter-btn" onclick="setLogFilter('TRADE')">TRADE</button>
+            <button class="log-filter-btn" onclick="setLogFilter('WARN')">WARN</button>
+            <button class="log-filter-btn" onclick="setLogFilter('ALERT')">ALERT</button>
+          </div>
+          <button class="log-pause-btn" id="log-pause-btn" onclick="toggleLogPause()">⏸ PAUSE</button>
+        </div>
+      </div>
+      <div id="log-body"></div>
+    </div>
+
+    <!-- COMMAND TERMINAL -->
+    <div id="panel-terminal">
+      <div class="terminal-header">
+        <div class="terminal-title">// COMMAND INTERFACE</div>
+        <div class="terminal-indicator">● READY</div>
+      </div>
+      <div id="terminal-output"></div>
+      <div class="terminal-input-row">
+        <div class="terminal-prompt">⬡&gt;</div>
+        <input type="text" id="terminal-input" placeholder="mirror all | scan wallet | show pnl | help" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//   CULT OF SYMMETRICS — MIRROR COPY TERMINAL ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+const MAX_MIRRORS = 15;
+const TOKENS = ['BONK','WIF','POPCAT','MOODENG','CHILLGUY','GOAT','PNUT','BOME','MEW','CATWIF','FWOG','GIGA','ACT','NEIRO','SLOTH','RETARDIO','SIGMA','HARRY'];
+const PLATFORMS = ['Pump.fun','Raydium','Orca','Meteora'];
+
+// ── WALLET POOL ──
+const WALLET_POOL = [
+  {id:'w1',  addr:'6cVkY1ULbVV3TcZJpaTDZbf7XpC7o3uMxJS4K3VCoUny', winRate:74, avgPnl:'+210%', trades:531},
+  {id:'w2',  addr:'AGBeezMQfr2m9ZKyw8npDVFpJzjf1He9fRB25gtQ9zAk',  winRate:68, avgPnl:'+175%', trades:412},
+  {id:'w3',  addr:'GpTXmkdvrTajqkzX1fBmC4BUjSboF9dHgfnqPqj8WAc4',  winRate:58, avgPnl:'+95%',  trades:2341},
+  {id:'w4',  addr:'Gf86XcMRTuiE5N3DC2NTWWb94DyFWT2qKwcaqDWUrWJu',  winRate:81, avgPnl:'+330%', trades:193},
+  {id:'w5',  addr:'8KiEjU7G1G4XraNwms7KRvNPsK6j8tBf9NW3KNn25kxX',  winRate:45, avgPnl:'+62%',  trades:3102},
+  {id:'w6',  addr:'22vhw1P2UrrVuLANauijh2cXKNSKoMv2WK7YbgzoWtSD',  winRate:63, avgPnl:'+140%', trades:988},
+  {id:'w7',  addr:'EYfdt8cNFyyTEJKp18dcoVbgUHDnM1SK3bT2uKj9XXHc',  winRate:77, avgPnl:'+255%', trades:299},
+  {id:'w8',  addr:'G3yQULrVKHCbHC2qviRVtfYSYdXQJvRfK8SnLipFsfez',  winRate:52, avgPnl:'+108%', trades:1820},
+  {id:'w9',  addr:'8qkv2VgB4s6uUWvSQwNHistCECejeVbnDM17drxFkkcE',  winRate:70, avgPnl:'+195%', trades:740},
+  {id:'w10', addr:'AQnffS8QbwWJ32rX4ZPo9TU4NTcyXVSk9t4sAt3p4RRC', winRate:55, avgPnl:'+88%',  trades:567},
+  {id:'w11', addr:'29d1FvcuM4qpUV6yD7DrUToPKfeRMzdXHfGkMdGuvNdw',  winRate:79, avgPnl:'+290%', trades:384},
+  {id:'w12', addr:'DGAeue48FDvvtaCBesndg6v8EkFwt4JasixcRMGsx6R5',  winRate:66, avgPnl:'+160%', trades:820},
+];
+
+// ── STATE ──
+let master = { bal: 1000, startBal: 1000, totalFees: 0, totalTrades: 0 };
+let solPrice = 0, solChange = 0, useCustomPrice = false, customPrice = 150;
+let mirrors = {}, globalFeed = [], mirrorAllActive = false;
+let logPaused = false, logFilter = 'ALL';
+let priceHistory = [], blockNum = 285441023;
+
+// ── BOOT SEQUENCE ──
+const bootMessages = [
+  '> INITIALIZING NEURAL SUBSTRATE...',
+  '> LOADING CRYPTOGRAPHIC KEYS...        [OK]',
+  '> CONNECTING TO SOLANA RPC...          [OK]',
+  '> SPAWNING MIRROR ENGINE (15 slots)... [OK]',
+  '> CALIBRATING COPY TRADE PIPELINE...   [OK]',
+  '> INDEXING WALLET BEHAVIORAL DB...     [OK]',
+  '> ESTABLISHING ENCRYPTED CHANNEL...    [OK]',
+  '> LOADING SOL/USD PRICE FEED...        [OK]',
+  '> CULT OF SYMMETRICS MIRROR TERMINAL READY',
+];
+
+function runBoot() {
+  const container = document.getElementById('boot-lines');
+  const bar = document.getElementById('boot-bar');
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i < bootMessages.length) {
+      const el = document.createElement('div');
+      el.className = 'boot-line';
+      el.textContent = bootMessages[i];
+      container.appendChild(el);
+      bar.style.width = ((i + 1) / bootMessages.length * 100) + '%';
+      i++;
+    } else {
+      clearInterval(interval);
+      setTimeout(() => {
+        const overlay = document.getElementById('boot-overlay');
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+          overlay.style.display = 'none';
+          document.getElementById('app').style.display = 'grid';
+          startEngine();
+        }, 500);
+      }, 400);
+    }
+  }, 220);
+}
+
+// ── UTILITIES ──
+function rnd(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function rand(a,b){ return Math.random()*(b-a)+a; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function sa(a){ return a.slice(0,6)+'...'+a.slice(-4); }
+function nowStr(){ return new Date().toLocaleTimeString(); }
+function randAddr(){ return Math.random().toString(36).slice(2,6).toUpperCase()+'...'+Math.random().toString(36).slice(2,6).toUpperCase(); }
+function aPrice(){ return useCustomPrice ? customPrice : (solPrice || 148.5); }
+
+// ── PRICE ──
+async function fetchPrice(manual=false) {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true&precision=4');
+    if(!r.ok) throw 0;
+    const d = await r.json();
+    solPrice = d.solana.usd;
+    solChange = d.solana.usd_24h_change || 0;
+  } catch(e) {
+    if(!solPrice) solPrice = 148.5;
+  }
+  renderPrice();
+  refreshSummary();
+}
+
+function renderPrice() {
+  const p = aPrice();
+  document.getElementById('sol-price-hd').textContent = '$' + p.toFixed(2);
+  const ce = document.getElementById('sol-change-hd');
+  ce.textContent = (solChange >= 0 ? '▲ +' : '▼ ') + Math.abs(solChange).toFixed(2) + '%';
+  const dot = document.getElementById('price-change-dot');
+  dot.className = 'status-dot-hd ' + (solChange >= 0 ? 'green' : 'red');
+}
+
+// ── GRID CANVAS ──
+const gridCanvas = document.getElementById('grid-canvas');
+const gctx = gridCanvas.getContext('2d');
+const GRID = 44;
+let pulses = [], nodes = [];
+
+function resizeGrid() {
+  gridCanvas.width = window.innerWidth;
+  gridCanvas.height = window.innerHeight;
+  rebuildNodes();
+}
+
+function rebuildNodes() {
+  const w = gridCanvas.width, h = gridCanvas.height;
+  nodes = [];
+  const cols = Math.ceil(w/GRID)+1, rows = Math.ceil(h/GRID)+1;
+  for(let gy=0;gy<rows;gy++) for(let gx=0;gx<cols;gx++) {
+    nodes.push({x:gx*GRID,y:gy*GRID,state:0,alpha:0,char:' ',counter:Math.floor(Math.random()*500),cooldown:Math.random()*800+200});
+  }
+}
+
+function spawnGridPulse() {
+  const horiz = Math.random()>0.5;
+  const w=gridCanvas.width,h=gridCanvas.height;
+  if(horiz) {
+    const row=Math.floor(Math.random()*(h/GRID))*GRID;
+    if(!pulses.some(p=>p.horiz&&p.y===row)) pulses.push({x:-60,y:row,dx:2+Math.random()*2,dy:0,life:1,horiz:true});
+  } else {
+    const col=Math.floor(Math.random()*(w/GRID))*GRID;
+    if(!pulses.some(p=>!p.horiz&&p.x===col)) pulses.push({x:col,y:-60,dx:0,dy:2+Math.random()*2,life:1,horiz:false});
+  }
+}
+
+function drawGrid() {
+  const w=gridCanvas.width,h=gridCanvas.height;
+  gctx.clearRect(0,0,w,h);
+  gctx.strokeStyle='rgba(0,229,255,0.04)';
+  gctx.lineWidth=0.5;
+  gctx.beginPath();
+  for(let x=0;x<=w;x+=GRID){gctx.moveTo(x,0);gctx.lineTo(x,h);}
+  for(let y=0;y<=h;y+=GRID){gctx.moveTo(0,y);gctx.lineTo(w,y);}
+  gctx.stroke();
+
+  for(const n of nodes) {
+    if(n.state===0){
+      gctx.fillStyle='rgba(0,229,255,0.08)';
+      gctx.beginPath();gctx.arc(n.x,n.y,0.8,0,Math.PI*2);gctx.fill();
+    }
+  }
+
+  if(Math.random()<0.015) spawnGridPulse();
+
+  for(let i=pulses.length-1;i>=0;i--){
+    const p=pulses[i];
+    p.x+=p.dx;p.y+=p.dy;p.life-=0.003;
+    if(p.life<=0||p.x>w+80||p.y>h+80){pulses.splice(i,1);continue;}
+    const len=60;
+    const grad=p.horiz?gctx.createLinearGradient(p.x-len,p.y,p.x,p.y):gctx.createLinearGradient(p.x,p.y-len,p.x,p.y);
+    grad.addColorStop(0,'rgba(0,229,255,0)');
+    grad.addColorStop(1,`rgba(0,229,255,${0.5*p.life})`);
+    gctx.strokeStyle=grad;gctx.lineWidth=1;
+    gctx.beginPath();
+    if(p.horiz){gctx.moveTo(p.x-len,p.y);gctx.lineTo(p.x,p.y);}
+    else{gctx.moveTo(p.x,p.y-len);gctx.lineTo(p.x,p.y);}
+    gctx.stroke();
+    gctx.fillStyle=`rgba(0,229,255,${0.15*p.life})`;
+    gctx.beginPath();gctx.arc(p.x,p.y,5,0,Math.PI*2);gctx.fill();
+    gctx.fillStyle=`rgba(0,229,255,${0.9*p.life})`;
+    gctx.beginPath();gctx.arc(p.x,p.y,1.5,0,Math.PI*2);gctx.fill();
+  }
+
+  for(const n of nodes) {
+    n.counter++;
+    if(n.state===0){
+      if(n.counter>n.cooldown&&Math.random()<0.002){
+        n.state=1;n.alpha=0;n.char=Math.random()>0.5?'1':'0';n.counter=0;
+      }
+    } else if(n.state===1){
+      n.alpha+=0.04;if(n.alpha>=0.7){n.state=2;n.counter=0;}
+    } else if(n.state===2){
+      n.alpha=0.5+Math.sin(n.counter*0.08)*0.2;
+      if(n.counter>60){n.state=3;}
+    } else if(n.state===3){
+      n.alpha-=0.04;if(n.alpha<=0){n.state=0;n.alpha=0;n.cooldown=Math.random()*1000+500;}
+    }
+    if(n.state>0&&n.alpha>0){
+      gctx.fillStyle=`rgba(0,229,255,${Math.min(n.alpha,1)*0.6})`;
+      gctx.font='8px monospace';gctx.textAlign='center';gctx.textBaseline='middle';
+      gctx.fillText(n.char,n.x,n.y);
+    }
+  }
+
+  requestAnimationFrame(drawGrid);
+}
+
+// ── PRICE CANVAS ──
+const priceCanvas = document.getElementById('price-canvas');
+const pctx = priceCanvas.getContext('2d');
+
+function resizePriceCanvas() {
+  const parent = priceCanvas.parentElement;
+  priceCanvas.width = parent.offsetWidth;
+  priceCanvas.height = 50;
+}
+
+function drawPriceGraph() {
+  const w=priceCanvas.width, h=priceCanvas.height;
+  pctx.clearRect(0,0,w,h);
+  const data = priceHistory;
+  if(data.length<2) return;
+  const color = '#00e5ff';
+  const min=Math.min(...data), max=Math.max(...data);
+  const range=max-min||1;
+
+  pctx.strokeStyle='rgba(0,229,255,0.05)';
+  pctx.lineWidth=0.5;
+  for(let i=1;i<4;i++){
+    const y=h/4*i;
+    pctx.beginPath();pctx.moveTo(0,y);pctx.lineTo(w,y);pctx.stroke();
+  }
+
+  const grad=pctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,color+'33');
+  grad.addColorStop(1,color+'00');
+  pctx.fillStyle=grad;
+  pctx.beginPath();
+  pctx.moveTo(0,h);
+  data.forEach((v,i)=>{
+    const x=w*(i/(data.length-1));
+    const y=h-(h*0.8*((v-min)/range))-h*0.1;
+    pctx.lineTo(x,y);
+  });
+  pctx.lineTo(w,h);pctx.closePath();pctx.fill();
+
+  pctx.strokeStyle=color;
+  pctx.lineWidth=1.5;
+  pctx.shadowColor=color;
+  pctx.shadowBlur=6;
+  pctx.beginPath();
+  data.forEach((v,i)=>{
+    const x=w*(i/(data.length-1));
+    const y=h-(h*0.8*((v-min)/range))-h*0.1;
+    if(i===0) pctx.moveTo(x,y); else pctx.lineTo(x,y);
+  });
+  pctx.stroke();
+  pctx.shadowBlur=0;
+
+  const last=data[data.length-1];
+  const lx2=w-1;
+  const ly2=h-(h*0.8*((last-min)/range))-h*0.1;
+  pctx.fillStyle=color;
+  pctx.shadowColor=color;pctx.shadowBlur=8;
+  pctx.beginPath();pctx.arc(lx2,ly2,3,0,Math.PI*2);pctx.fill();
+  pctx.shadowBlur=0;
+}
+
+// ── RENDER WALLET POOL ──
+function renderPool() {
+  const count = Object.keys(mirrors).length;
+  document.getElementById('wallet-pool-badge').textContent = WALLET_POOL.length + ' INDEXED';
+  document.getElementById('mirror-count-ctrl').textContent = count + ' / ' + MAX_MIRRORS + ' SLOTS';
+  document.getElementById('mirror-count-hd').textContent = count;
+
+  const el = document.getElementById('wallet-pool');
+  el.innerHTML = WALLET_POOL.map(w => {
+    const inUse = Object.values(mirrors).some(m => m.walletId === w.id);
+    const full = count >= MAX_MIRRORS;
+    return `<div class="wallet-item ${inUse ? 'mirroring' : 'available'}">
+      <div class="wallet-row1">
+        <div class="wallet-addr">${sa(w.addr)}</div>
+        <button class="add-mirror-btn ${inUse ? 'active' : ''}" onclick="event.stopPropagation();${inUse || full ? '' : "addMirror('"+w.id+"')"}" ${inUse||full?'disabled':''}>${inUse ? '✓ ACTIVE' : '+MIRROR'}</button>
+      </div>
+      <div class="wallet-row2">
+        <span class="wallet-meta-sm">WR: <span class="hl">${w.winRate}%</span></span>
+        <span class="wallet-meta-sm">PNL: <span class="hl">${w.avgPnl}</span></span>
+        <span class="wallet-meta-sm">${w.trades} TXS</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addCustomWallet() {
+  const v = document.getElementById('pasteAddr').value.trim();
+  if(v.length < 8) return;
+  const id = 'c' + Date.now();
+  WALLET_POOL.push({id, addr:v, winRate:rnd(44,76), avgPnl:'+'+(rnd(60,220))+'%', trades:rnd(50,600)});
+  document.getElementById('pasteAddr').value = '';
+  renderPool();
+  addLog('INFO', `Wallet indexed: <span class="hl-addr">${sa(v)}</span> — behavioral analysis queued`);
+}
+
+// ── MIRROR MANAGEMENT ──
+function addMirror(walletId) {
+  if(Object.keys(mirrors).length >= MAX_MIRRORS) return;
+  if(Object.values(mirrors).some(m => m.walletId === walletId)) return;
+  const mid = 'm' + Date.now();
+  const w = WALLET_POOL.find(x => x.id === walletId);
+  mirrors[mid] = {
+    id: mid, walletId, walletAddr: w.addr, winRate: w.winRate,
+    running: false, timer: null, trades: [], positions: {}, localFees: 0, localPnl: 0,
+    tab: 'config',
+    cfg: { buyAmt: 0.1, tp: 50, sl: 30, prioFee: 0.002, tip: 0, copySell: true, antiMev: false, minBuy: 0.05, maxBuy: 5 }
+  };
+  renderPool();
+  renderMirrorGrid();
+  addLog('COPY', `Mirror slot created for <span class="hl-addr">${sa(w.addr)}</span> — awaiting start`);
+  if(mirrorAllActive) { mirrors[mid].running = true; simLoop(mid); }
+}
+
+function removeMirror(mid) {
+  if(mirrors[mid].running) { mirrors[mid].running = false; clearTimeout(mirrors[mid].timer); }
+  const addr = mirrors[mid].walletAddr;
+  delete mirrors[mid];
+  renderPool(); renderMirrorGrid(); refreshSummary();
+  addLog('WARN', `Mirror removed: <span class="hl-addr">${sa(addr)}</span>`);
+  if(mirrorAllActive && Object.keys(mirrors).length === 0) {
+    mirrorAllActive = false;
+    document.getElementById('btnMirrorAll').textContent = '▶ MIRROR ALL';
+    document.getElementById('btnMirrorAll').className = 'ctrl-btn start';
+    document.getElementById('mirror-status-badge').textContent = 'STANDBY';
+    document.getElementById('mirror-status-badge').className = 'panel-badge green';
+  }
+}
+
+// ── MASTER WALLET ──
+function applyMasterBal() {
+  if(mirrorAllActive || Object.values(mirrors).some(m=>m.running)) {
+    addTerminalLine('ERROR: Stop all mirrors before changing balance', 'err');
+    return;
+  }
+  const v = parseFloat(document.getElementById('masterBalInput').value);
+  if(!v || v <= 0) return;
+  master.bal = v; master.startBal = v; master.totalFees = 0; master.totalTrades = 0;
+  resetMirrorStats();
+  refreshSummary();
+  addLog('SYS', `Master balance set: <span class="hl-green">${v.toFixed(2)} SOL</span>`);
+}
+
+function resetMaster() {
+  if(mirrorAllActive || Object.values(mirrors).some(m=>m.running)) {
+    addTerminalLine('ERROR: Stop all mirrors first', 'err');
+    return;
+  }
+  const v = parseFloat(document.getElementById('masterBalInput').value) || 1000;
+  master.bal = v; master.startBal = v; master.totalFees = 0; master.totalTrades = 0;
+  resetMirrorStats();
+  globalFeed = [];
+  refreshSummary();
+  renderMirrorGrid();
+  renderPnlPanel();
+  addLog('SYS', `System reset — master balance: <span class="hl-green">${v.toFixed(2)} SOL</span>`);
+}
+
+function resetMirrorStats() {
+  Object.values(mirrors).forEach(m => {
+    m.trades = []; m.positions = {}; m.localFees = 0; m.localPnl = 0;
+  });
+}
+
+// ── MIRROR ALL ──
+function toggleMirrorAll() {
+  const btn = document.getElementById('btnMirrorAll');
+  if(!Object.keys(mirrors).length) {
+    addTerminalLine('ERROR: Add at least one mirror slot first', 'err');
+    return;
+  }
+  mirrorAllActive = !mirrorAllActive;
+
+  if(mirrorAllActive) {
+    master.startBal = master.bal;
+    Object.keys(mirrors).forEach(mid => {
+      if(!mirrors[mid].running) {
+        mirrors[mid].running = true;
+        simLoop(mid);
+      }
+    });
+    btn.textContent = '⏹ STOP ALL';
+    btn.className = 'ctrl-btn stop';
+    document.getElementById('mirror-status-badge').textContent = 'MIRRORING';
+    document.getElementById('mirror-status-badge').className = 'panel-badge cyan';
+    addLog('ALERT', `<span class="hl-purple">ALL MIRRORS ACTIVATED</span> — ${Object.keys(mirrors).length} slots running`);
+  } else {
+    Object.keys(mirrors).forEach(mid => {
+      mirrors[mid].running = false;
+      clearTimeout(mirrors[mid].timer);
+    });
+    btn.textContent = '▶ MIRROR ALL';
+    btn.className = 'ctrl-btn start';
+    document.getElementById('mirror-status-badge').textContent = 'STANDBY';
+    document.getElementById('mirror-status-badge').className = 'panel-badge green';
+    addLog('WARN', `All mirrors stopped`);
+  }
+  renderMirrorGrid();
+  refreshSummary();
+}
+
+function toggleSingleMirror(mid) {
+  const m = mirrors[mid];
+  m.running = !m.running;
+  if(m.running) {
+    simLoop(mid);
+    addLog('COPY', `Mirror started: <span class="hl-addr">${sa(m.walletAddr)}</span>`);
+  } else {
+    clearTimeout(m.timer);
+    addLog('WARN', `Mirror stopped: <span class="hl-addr">${sa(m.walletAddr)}</span>`);
+  }
+  renderMirrorGrid();
+  refreshSummary();
+}
+
+// ── MIRROR GRID RENDERING ──
+function renderMirrorGrid() {
+  const grid = document.getElementById('mirrorsGrid');
+  const ids = Object.keys(mirrors);
+  if(!ids.length) {
+    grid.innerHTML = '<div class="mirror-placeholder">ADD TARGET WALLETS FROM THE LEFT PANEL<br>CLICK [+MIRROR] TO CREATE A COPY SLOT<br>UP TO 15 MIRRORS SHARE ONE MASTER WALLET</div>';
+    return;
+  }
+  grid.innerHTML = ids.map(mid => buildMirrorSlot(mid)).join('');
+}
+
+function patchMirror(mid) {
+  const el = document.getElementById('ms-' + mid);
+  if(el) el.outerHTML = buildMirrorSlot(mid);
+}
+
+function buildMirrorSlot(mid) {
+  const m = mirrors[mid];
+  const addr = sa(m.walletAddr);
+  let bodyHTML = '';
+
+  if(m.tab === 'config') bodyHTML = buildMirrorConfig(mid);
+  else if(m.tab === 'feed') bodyHTML = buildMirrorFeed(mid);
+  else bodyHTML = buildMirrorStats(mid);
+
+  return `<div class="mirror-slot ${m.running?'running':''}" id="ms-${mid}">
+    <div class="mirror-slot-header">
+      <div class="mirror-status-dot ${m.running?'running':''}"></div>
+      <div class="mirror-slot-addr" title="${m.walletAddr}">${addr}</div>
+      <button class="mirror-remove-btn" onclick="removeMirror('${mid}')">✕</button>
+    </div>
+    <div class="mirror-tabs">
+      <button class="mirror-tab ${m.tab==='config'?'on':''}" onclick="setMirrorTab('${mid}','config')">CONFIG</button>
+      <button class="mirror-tab ${m.tab==='feed'?'on':''}" onclick="setMirrorTab('${mid}','feed')">FEED</button>
+      <button class="mirror-tab ${m.tab==='stats'?'on':''}" onclick="setMirrorTab('${mid}','stats')">STATS</button>
+    </div>
+    <div class="mirror-body">${bodyHTML}</div>
+  </div>`;
+}
+
+function buildMirrorConfig(mid) {
+  const m = mirrors[mid], c = m.cfg;
+  return `
+    <div class="cfg-section-title">BUY SETTINGS</div>
+    <div class="cfg-row"><span class="key">BUY AMOUNT</span><input class="cfg-input" type="number" value="${c.buyAmt}" step="0.01" min="0.001" onchange="mirrors['${mid}'].cfg.buyAmt=parseFloat(this.value)||0.1"> <span class="key">SOL</span></div>
+    <div class="cfg-row"><span class="key">MIN BUY</span><input class="cfg-input" type="number" value="${c.minBuy}" step="0.01" onchange="mirrors['${mid}'].cfg.minBuy=parseFloat(this.value)||0.05"></div>
+    <div class="cfg-row"><span class="key">MAX BUY</span><input class="cfg-input" type="number" value="${c.maxBuy}" step="0.1" onchange="mirrors['${mid}'].cfg.maxBuy=parseFloat(this.value)||5"></div>
+    <div class="cfg-section-title">SELL SETTINGS</div>
+    <div class="cfg-row"><span class="key">TAKE PROFIT %</span><input class="cfg-input" type="number" value="${c.tp}" min="0" onchange="mirrors['${mid}'].cfg.tp=parseFloat(this.value)||50"></div>
+    <div class="cfg-row"><span class="key">STOP LOSS %</span><input class="cfg-input" type="number" value="${c.sl}" min="0" onchange="mirrors['${mid}'].cfg.sl=parseFloat(this.value)||30"></div>
+    <div class="cfg-row"><span class="key">COPY SELL</span><div class="cfg-toggle ${c.copySell?'on':''}" onclick="mirrors['${mid}'].cfg.copySell=!mirrors['${mid}'].cfg.copySell;this.classList.toggle('on')"></div></div>
+    <div class="cfg-section-title">FEES</div>
+    <div class="fee-preset-row">
+      <button class="fee-preset-btn" onclick="feePreset('${mid}','eco')">ECO</button>
+      <button class="fee-preset-btn on" onclick="feePreset('${mid}','normal')">NORMAL</button>
+      <button class="fee-preset-btn" onclick="feePreset('${mid}','fast')">FAST</button>
+      <button class="fee-preset-btn" onclick="feePreset('${mid}','turbo')">TURBO</button>
+    </div>
+    <div class="cfg-row"><span class="key">PRIORITY</span><input class="cfg-input" type="number" value="${c.prioFee}" step="0.001" min="0.001" onchange="mirrors['${mid}'].cfg.prioFee=parseFloat(this.value)||0.002"> <span class="key">SOL</span></div>
+    <div class="cfg-row"><span class="key">ANTI-MEV</span><div class="cfg-toggle ${c.antiMev?'on':''}" onclick="mirrors['${mid}'].cfg.antiMev=!mirrors['${mid}'].cfg.antiMev;this.classList.toggle('on')"></div></div>
+    ${!mirrorAllActive
+      ? `<button class="mirror-start-btn ${m.running?'stop-btn':''}" onclick="toggleSingleMirror('${mid}')">${m.running?'⏹ STOP MIRROR':'▶ START MIRROR'}</button>`
+      : `<div style="font-size:7px;color:var(--dim);text-align:center;margin-top:6px;letter-spacing:0.15em">CONTROLLED BY MIRROR ALL</div>`}
+  `;
+}
+
+function buildMirrorFeed(mid) {
+  const m = mirrors[mid];
+  if(!m.trades.length) return '<div style="color:var(--dim);text-align:center;padding:20px;font-size:7px;letter-spacing:0.15em">NO TRADES YET</div>';
+  return m.trades.slice().reverse().slice(0,20).map(t => {
+    if(t.type === 'buy') {
+      return `<div class="tx-card">
+        <div class="tx-card-top"><span class="tx-badge buy">BUY</span><span class="tx-token">${t.token}</span><span class="tx-time">${t.time}</span></div>
+        <div class="tx-detail"><span class="k">AMOUNT</span><span class="v pos">${t.amt.toFixed(4)} SOL</span></div>
+        <div class="tx-detail"><span class="k">FEE</span><span class="v">${t.fee.toFixed(5)} SOL</span></div>
+      </div>`;
+    } else {
+      return `<div class="tx-card">
+        <div class="tx-card-top"><span class="tx-badge sell">SELL</span><span class="tx-token">${t.token}</span><span class="tx-time">${t.time}</span></div>
+        <div class="tx-detail"><span class="k">PNL</span><span class="v ${t.pnlPct>=0?'pos':'neg'}">${t.pnlPct>=0?'+':''}${t.pnlPct.toFixed(1)}%</span></div>
+        <div class="tx-detail"><span class="k">RETURNED</span><span class="v pos">+${t.ret.toFixed(5)} SOL</span></div>
+      </div>`;
+    }
+  }).join('');
+}
+
+function buildMirrorStats(mid) {
+  const m = mirrors[mid];
+  const sells = m.trades.filter(t => t.type === 'sell');
+  const wr = sells.length ? Math.round(sells.filter(t => t.pnlPct > 0).length / sells.length * 100) : 0;
+  const pnl = m.localPnl;
+  return `
+    <div class="stat-block">
+      <div class="stat-title">MIRROR PNL</div>
+      <div class="stat-val" style="color:${pnl>=0?'var(--green)':'var(--red)'}">${pnl>=0?'+':''}${pnl.toFixed(4)} SOL</div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-block"><div class="stat-title">TRADES</div><div class="stat-val" style="color:var(--white)">${m.trades.length}</div></div>
+      <div class="stat-block"><div class="stat-title">WIN RATE</div><div class="stat-val" style="color:${wr>=50?'var(--green)':'var(--red)'}">${wr}%</div></div>
+      <div class="stat-block"><div class="stat-title">FEES</div><div class="stat-val" style="color:var(--mid);font-size:9px">${m.localFees.toFixed(5)}</div></div>
+      <div class="stat-block"><div class="stat-title">POSITIONS</div><div class="stat-val" style="color:var(--cyan)">${Object.keys(m.positions).length}</div></div>
+    </div>
+  `;
+}
+
+function setMirrorTab(mid, tab) {
+  mirrors[mid].tab = tab;
+  patchMirror(mid);
+}
+
+function feePreset(mid, p) {
+  const map = { eco:[0.002,0,true], normal:[0.005,0.001,true], fast:[0.012,0.003,false], turbo:[0.03,0.008,false] };
+  const [prio,tip,mev] = map[p];
+  mirrors[mid].cfg.prioFee = prio;
+  mirrors[mid].cfg.tip = tip;
+  mirrors[mid].cfg.antiMev = mev;
+  patchMirror(mid);
+}
+
+// ── SIM ENGINE ──
+function simLoop(mid) {
+  const m = mirrors[mid];
+  if(!m || !m.running) return;
+  m.timer = setTimeout(() => {
+    if(!mirrors[mid] || !mirrors[mid].running) return;
+    simTx(mid);
+    simLoop(mid);
+  }, rand(1600, 6000));
+}
+
+function simTx(mid) {
+  const m = mirrors[mid], c = m.cfg;
+  const isBuy = Math.random() > 0.38;
+  const token = pick(TOKENS);
+  const platform = pick(PLATFORMS);
+  const fee = c.prioFee + c.tip + 0.000005;
+  const time = nowStr();
+
+  if(isBuy) {
+    const targetBuy = rand(c.minBuy, Math.min(c.maxBuy, 2));
+    if(targetBuy < c.minBuy || targetBuy > c.maxBuy) return;
+    const total = c.buyAmt + fee;
+    if(master.bal < total) {
+      addLog('WARN', `Master wallet low — <span class="hl-addr">${sa(m.walletAddr)}</span> buy rejected`);
+      return;
+    }
+    master.bal -= total;
+    master.totalFees += fee;
+    master.totalTrades++;
+    m.localFees += fee;
+    m.positions[token] = m.positions[token] || [];
+    m.positions[token].push({amt: c.buyAmt, time});
+    m.trades.push({type:'buy', token, amt:c.buyAmt, fee, platform, time});
+    globalFeed.unshift({type:'buy', mirror:sa(m.walletAddr), token, amt:c.buyAmt, fee, platform, time});
+    addLog('TRADE', `BUY <span class="hl-green">${c.buyAmt.toFixed(4)} SOL</span> → <span class="hl-addr">${token}</span> via ${platform} [${sa(m.walletAddr)}]`);
+  } else {
+    const keys = Object.keys(m.positions).filter(k => m.positions[k] && m.positions[k].length > 0);
+    if(!keys.length) return;
+    const sellToken = keys.includes(token) ? token : pick(keys);
+    const pos = m.positions[sellToken].pop();
+    if(!m.positions[sellToken].length) delete m.positions[sellToken];
+    const isWin = Math.random() < (m.winRate / 100);
+    const pnlPct = isWin ? rand(15, 380) : rand(-c.sl, -5);
+    const ret = Math.max(0, pos.amt * (1 + pnlPct/100) - fee);
+    master.bal += ret;
+    master.totalFees += fee;
+    master.totalTrades++;
+    m.localFees += fee;
+    m.localPnl += (ret - pos.amt);
+    m.trades.push({type:'sell', token:sellToken, pnlPct, ret, fee, platform, time});
+    globalFeed.unshift({type:'sell', mirror:sa(m.walletAddr), token:sellToken, pnlPct, ret, fee, time});
+    if(pnlPct >= 0) {
+      addLog('TRADE', `SELL <span class="hl-green">+${pnlPct.toFixed(1)}%</span> ${sellToken} → <span class="hl-green">+${ret.toFixed(4)} SOL</span> [${sa(m.walletAddr)}]`);
+    } else {
+      addLog('SELL', `SELL <span class="hl-red">${pnlPct.toFixed(1)}%</span> ${sellToken} → ${ret.toFixed(4)} SOL [${sa(m.walletAddr)}]`);
+    }
+  }
+
+  if(globalFeed.length > 200) globalFeed.pop();
+  patchMirror(mid);
+  refreshSummary();
+  renderPnlPanel();
+}
+
+// ── PNL PANEL (RIGHT) ──
+function renderPnlPanel() {
+  const el = document.getElementById('pnl-list');
+  const p = aPrice();
+  const masterPnl = master.bal - master.startBal;
+  const masterPct = master.startBal > 0 ? (masterPnl / master.startBal * 100) : 0;
+  const ms = Object.values(mirrors);
+
+  let html = `
+    <div class="master-pnl-block">
+      <div class="master-pnl-title">MASTER WALLET</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+        <div>
+          <div style="font-size:7px;color:var(--dim);letter-spacing:0.1em">BALANCE</div>
+          <div style="font-size:12px;font-weight:700;color:var(--white)">${master.bal.toFixed(4)}</div>
+          <div style="font-size:7px;color:var(--dim)">$${(master.bal * p).toFixed(2)}</div>
+        </div>
+        <div>
+          <div style="font-size:7px;color:var(--dim);letter-spacing:0.1em">NET PNL</div>
+          <div style="font-size:12px;font-weight:700;color:${masterPnl>=0?'var(--green)':'var(--red)'}">${masterPnl>=0?'+':''}${masterPnl.toFixed(4)}</div>
+          <div style="font-size:7px;color:${masterPnl>=0?'var(--green)':'var(--red)'}">${masterPct>=0?'+':''}${masterPct.toFixed(2)}%</div>
+        </div>
+      </div>
+      <div style="font-size:7px;color:var(--dim);line-height:1.8;letter-spacing:0.05em">
+        TRADES: ${master.totalTrades} &nbsp;&nbsp; FEES: ${master.totalFees.toFixed(5)} SOL
+      </div>
+    </div>`;
+
+  if(ms.length) {
+    html += `<div style="padding:4px 8px;font-size:7px;letter-spacing:0.25em;color:var(--purple)">◈ PER-MIRROR PNL</div>`;
+    ms.forEach(m => {
+      const sells = m.trades.filter(t => t.type === 'sell');
+      const wr = sells.length ? Math.round(sells.filter(t => t.pnlPct > 0).length / sells.length * 100) : 0;
+      html += `<div class="pnl-item">
+        <div class="pnl-row1">
+          <div class="pnl-addr">${sa(m.walletAddr)}</div>
+          <div class="pnl-val ${m.localPnl>=0?'pos':'neg'}">${m.localPnl>=0?'+':''}${m.localPnl.toFixed(4)}</div>
+        </div>
+        <div class="pnl-row2">
+          <span>${m.trades.length} trades</span>
+          <span>WR: <span class="${wr>=50?'hl':'hl-r'}">${wr}%</span></span>
+          <span>${Object.keys(m.positions).length} open</span>
+          <span style="font-size:7px;letter-spacing:0.1em;padding:1px 4px;border:1px solid ${m.running?'var(--green2)':'var(--border2)'};color:${m.running?'var(--green)':'var(--dim)'}">${m.running?'RUNNING':'STOPPED'}</span>
+        </div>
+      </div>`;
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+// ── REFRESH SUMMARY ──
+function refreshSummary() {
+  const ms = Object.values(mirrors);
+  const running = ms.filter(m => m.running).length;
+  const masterPnl = master.bal - master.startBal;
+  const masterPct = master.startBal > 0 ? (masterPnl / master.startBal * 100) : 0;
+  const p = aPrice();
+
+  document.getElementById('ms-bal').textContent = master.bal.toFixed(2);
+  document.getElementById('ms-bal-usd').textContent = '$' + (master.bal * p).toFixed(2);
+
+  const pnlEl = document.getElementById('ms-pnl');
+  pnlEl.textContent = (masterPnl >= 0 ? '+' : '') + masterPnl.toFixed(4);
+  pnlEl.className = 'master-stat-value ' + (masterPnl >= 0 ? 'green' : 'red');
+  const pnlPctEl = document.getElementById('ms-pnl-pct');
+  pnlPctEl.textContent = (masterPct >= 0 ? '+' : '') + masterPct.toFixed(2) + '%';
+  pnlPctEl.className = 'master-stat-sub ' + (masterPnl >= 0 ? 'up' : 'down');
+
+  document.getElementById('ms-trades').textContent = master.totalTrades;
+  document.getElementById('ms-fees').textContent = 'FEES: ' + master.totalFees.toFixed(5);
+  document.getElementById('ms-active').textContent = running;
+  document.getElementById('ms-running-label').textContent = running > 0 ? 'MIRRORING' : 'STANDBY';
+  document.getElementById('mirror-count-hd').textContent = Object.keys(mirrors).length;
+}
+
+// ── EVENT LOG ──
+function addLog(tag, msgHTML) {
+  if(logPaused) return;
+  if(logFilter !== 'ALL' && logFilter !== tag) return;
+  const logBody = document.getElementById('log-body');
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `
+    <span class="log-time">${nowStr()}</span>
+    <span class="log-tag ${tag}">${tag}</span>
+    <span class="log-msg">${msgHTML}</span>
+  `;
+  logBody.appendChild(line);
+  while(logBody.children.length > 200) logBody.removeChild(logBody.firstChild);
+  logBody.scrollTop = logBody.scrollHeight;
+}
+
+function setLogFilter(filter) {
+  logFilter = filter;
+  document.querySelectorAll('.log-filter-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === filter || (filter === 'ALL' && b.textContent === 'ALL'));
+  });
+}
+
+function toggleLogPause() {
+  logPaused = !logPaused;
+  const btn = document.getElementById('log-pause-btn');
+  btn.textContent = logPaused ? '▶ RESUME' : '⏸ PAUSE';
+  btn.classList.toggle('paused', logPaused);
+}
+
+// ── TERMINAL ──
+function addTerminalLine(text, cls='out') {
+  const out = document.getElementById('terminal-output');
+  const line = document.createElement('div');
+  line.className = `term-line ${cls}`;
+  line.textContent = text;
+  out.appendChild(line);
+  while(out.children.length > 80) out.removeChild(out.firstChild);
+  out.scrollTop = out.scrollHeight;
+}
+
+const COMMANDS = {
+  'mirror': (args) => {
+    if(args[0] === 'all') {
+      toggleMirrorAll();
+    } else {
+      addTerminalLine('Usage: mirror all — Toggle mirror all mode', 'out');
+    }
+  },
+  'scan': (args) => {
+    const addr = args[0] || '';
+    addTerminalLine('Scanning wallet pool...', 'sys');
+    setTimeout(() => {
+      addTerminalLine('SCAN COMPLETE: ' + WALLET_POOL.length + ' wallets indexed', 'ok');
+      addTerminalLine('Active mirrors: ' + Object.keys(mirrors).length, 'out');
+      addTerminalLine('Running: ' + Object.values(mirrors).filter(m=>m.running).length, 'out');
+    }, 400);
+  },
+  'show': (args) => {
+    const what = args[0] || 'pnl';
+    if(what === 'pnl') {
+      const masterPnl = master.bal - master.startBal;
+      addTerminalLine(`MASTER PNL: ${masterPnl>=0?'+':''}${masterPnl.toFixed(4)} SOL`, masterPnl>=0?'ok':'err');
+      addTerminalLine(`Balance: ${master.bal.toFixed(4)} SOL | Trades: ${master.totalTrades}`, 'out');
+      Object.values(mirrors).forEach(m => {
+        addTerminalLine(`  ${sa(m.walletAddr)}: ${m.localPnl>=0?'+':''}${m.localPnl.toFixed(4)} SOL (${m.trades.length} trades)`, 'out');
+      });
+    } else if(what === 'wallets') {
+      WALLET_POOL.forEach(w => addTerminalLine(`  ${sa(w.addr)} — WR:${w.winRate}% | ${w.avgPnl}`, 'out'));
+    } else if(what === 'mirrors') {
+      Object.values(mirrors).forEach(m => {
+        addTerminalLine(`  ${sa(m.walletAddr)} — ${m.running?'RUNNING':'STOPPED'} — PNL:${m.localPnl>=0?'+':''}${m.localPnl.toFixed(4)}`, m.running?'ok':'warn');
+      });
+    } else {
+      addTerminalLine('Unknown target: ' + what, 'err');
+    }
+  },
+  'set': (args) => {
+    if(args[0] === 'balance' || args[0] === 'bal') {
+      const v = parseFloat(args[1]);
+      if(!v || v <= 0) { addTerminalLine('Usage: set balance <amount>', 'err'); return; }
+      if(mirrorAllActive) { addTerminalLine('ERROR: Stop mirrors first', 'err'); return; }
+      master.bal = v; master.startBal = v; master.totalFees = 0; master.totalTrades = 0;
+      document.getElementById('masterBalInput').value = v;
+      resetMirrorStats(); refreshSummary();
+      addTerminalLine(`Master balance set: ${v} SOL`, 'ok');
+    }
+  },
+  'stop': (args) => {
+    if(args[0] === 'all') {
+      if(mirrorAllActive) toggleMirrorAll();
+      else {
+        Object.keys(mirrors).forEach(mid => {
+          if(mirrors[mid].running) {
+            mirrors[mid].running = false;
+            clearTimeout(mirrors[mid].timer);
+          }
+        });
+        renderMirrorGrid(); refreshSummary();
+        addTerminalLine('All mirrors stopped', 'ok');
+      }
+    }
+  },
+  'clear': () => { document.getElementById('terminal-output').innerHTML = ''; },
+  'help': () => {
+    addTerminalLine('AVAILABLE COMMANDS:', 'sys');
+    addTerminalLine('  mirror all          — Toggle mirror all mode', 'out');
+    addTerminalLine('  scan                — Scan wallet pool', 'out');
+    addTerminalLine('  show pnl            — Master PNL report', 'out');
+    addTerminalLine('  show wallets        — List indexed wallets', 'out');
+    addTerminalLine('  show mirrors        — Mirror status report', 'out');
+    addTerminalLine('  set balance <amt>   — Set master balance', 'out');
+    addTerminalLine('  stop all            — Stop all mirrors', 'out');
+    addTerminalLine('  clear               — Clear terminal', 'out');
+  },
+};
+
+document.getElementById('terminal-input').addEventListener('keydown', (e) => {
+  if(e.key !== 'Enter') return;
+  const val = e.target.value.trim();
+  if(!val) return;
+  addTerminalLine(`⬡> ${val}`, 'cmd');
+  e.target.value = '';
+  const parts = val.toLowerCase().split(' ').filter(Boolean);
+  const cmd = parts[0];
+  const args = parts.slice(1);
+  if(COMMANDS[cmd]) { COMMANDS[cmd](args); }
+  else { addTerminalLine(`Command not found: ${cmd}. Type 'help' for commands.`, 'err'); }
+});
+
+// ── LIVE DATA ──
+function updateLiveData() {
+  // Price drift for graph
+  const p = aPrice();
+  priceHistory.push(p * (1 + (Math.random()-0.48)*0.002));
+  if(priceHistory.length > 80) priceHistory.shift();
+
+  // Block number
+  blockNum += rnd(1,4);
+  document.getElementById('block-num').textContent = blockNum.toLocaleString();
+  document.getElementById('latency-val').textContent = rnd(8,28) + 'ms';
+
+  drawPriceGraph();
+  refreshSummary();
+  renderPnlPanel();
+}
+
+// ── AMBIENT LOG EVENTS ──
+const AMBIENT_LOGS = [
+  { tag: 'INFO', msg: () => `Block <span class="hl-addr">${blockNum.toLocaleString()}</span> processed — ${rnd(200,800)} TXs` },
+  { tag: 'INFO', msg: () => `Latency: <span class="hl-green">${rnd(8,24)}ms</span> — chain sync nominal` },
+  { tag: 'COPY', msg: () => `Wallet <span class="hl-addr">${randAddr()}</span> activity detected — copy queue check` },
+  { tag: 'ALERT', msg: () => `Whale movement: <span class="hl-yellow">${rnd(1,9)}.${rnd(10,99)}M SOL</span> transferred` },
+  { tag: 'WARN', msg: () => `MEV detected on TX <span class="hl-red">0x${Math.random().toString(16).slice(2,10)}</span> — anti-MEV shield active` },
+  { tag: 'COPY', msg: () => `Smart money inflow: <span class="hl-green">$${rnd(100,999)}K</span> from <span class="hl-addr">${randAddr()}</span>` },
+];
+
+function emitAmbientLog() {
+  if(!logPaused) {
+    const t = pick(AMBIENT_LOGS);
+    addLog(t.tag, t.msg());
+  }
+}
+
+// ── ENGINE START ──
+function startEngine() {
+  // Seed price history
+  let p = aPrice() || 148;
+  for(let i=0;i<80;i++){ p *= (1+(Math.random()-0.48)*0.003); priceHistory.push(p); }
+
+  renderPool();
+  renderMirrorGrid();
+  renderPnlPanel();
+  resizePriceCanvas();
+  resizeGrid();
+
+  addTerminalLine('CULT OF SYMMETRICS — MIRROR COPY TERMINAL', 'sys');
+  addTerminalLine('CLEARANCE LEVEL: OMEGA-7', 'sys');
+  addTerminalLine('Multi-wallet copy trading engine initialized.', 'out');
+  addTerminalLine('Type "help" for available commands.', 'out');
+
+  // Initial log burst
+  for(let i=0;i<5;i++) {
+    setTimeout(() => addLog('SYS', `System initialized — module ${i+1}/5 online`), i*180);
+  }
+
+  // Intervals
+  setInterval(updateLiveData, 1200);
+
+  // Variable-rate ambient log
+  function scheduleLog() {
+    setTimeout(() => { emitAmbientLog(); scheduleLog(); }, 3000 + Math.random() * 5000);
+  }
+  scheduleLog();
+
+  drawGrid();
+  drawPriceGraph();
+}
+
+// ── PRICE FETCH ──
+async function initPrice() {
+  await fetchPrice();
+  setInterval(() => fetchPrice(), 30000);
+}
+
+// ── INIT ──
+window.addEventListener('resize', () => {
+  resizeGrid();
+  resizePriceCanvas();
+  drawPriceGraph();
+});
+
+// Handle paste input enter
+document.getElementById('pasteAddr').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') addCustomWallet();
+});
+
+initPrice();
+runBoot();
+</script>
+</body>
+</html>
